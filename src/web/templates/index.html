@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Sentinel OS — Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta http-equiv="refresh" content="15">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-emerald-400">Trade Sentinel OS</h1>
+                <p class="text-slate-400 text-sm">Autonomous Technical Scanning & Risk Management Engine</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Scanner Active</span>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+                <h2 class="text-lg font-semibold text-slate-200">Recent Signals & Execution Logs</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs font-mono border-b border-slate-800">
+                        <tr>
+                            <th class="px-6 py-3">ID</th>
+                            <th class="px-6 py-3">Symbol</th>
+                            <th class="px-6 py-3">Action</th>
+                            <th class="px-6 py-3">Entry</th>
+                            <th class="px-6 py-3">SL / TP</th>
+                            <th class="px-6 py-3">Risk ($)</th>
+                            <th class="px-6 py-3">Return ($)</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 font-mono">
+                        {% for trade in trades %}
+                        <tr class="hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 text-slate-400">#{{ trade.id }}</td>
+                            <td class="px-6 py-4 font-bold text-white">{{ trade.symbol }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded text-xs font-bold {% if trade.action == 'BUY' %}bg-emerald-950 text-emerald-400 border border-emerald-800{% else %}bg-rose-950 text-rose-400 border border-rose-800{% endif %}">
+                                    {{ trade.action }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">${{ "%.2f"|format(trade.entry_price) }}</td>
+                            <td class="px-6 py-4 text-xs text-slate-400">
+                                SL: <span class="text-rose-400">${{ "%.2f"|format(trade.stop_loss) }}</span><br>
+                                TP: <span class="text-emerald-400">${{ "%.2f"|format(trade.take_profit) }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-rose-400">${{ "%.2f"|format(trade.dollar_risk) }}</td>
+                            <td class="px-6 py-4 text-emerald-400">${{ "%.2f"|format(trade.expected_return) }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                    {% if trade.status == 'EXECUTED' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                    {% elif trade.status == 'PENDING' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                                    {% else %}bg-slate-800 text-slate-400 border border-slate-700{% endif %}">
+                                    {{ trade.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">{{ trade.created_at }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="px-6 py-8 text-center text-slate-500">No trading signals generated yet. Monitoring market...</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
