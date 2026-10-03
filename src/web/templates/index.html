@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Sentinel OS — Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        async function handleDecision(proposalId, action) {
+            const res = await fetch('/api/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ proposal_id: proposalId, action: action })
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Action failed: ' + (await res.json()).detail);
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-emerald-400">Trade Sentinel OS</h1>
+                <p class="text-slate-400 text-sm">Self-Healing & Human-in-the-Loop Trading Engine</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Engine Active</span>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-slate-200">Pending & Historic Signal Logs</h2>
+                <button onclick="window.location.reload()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-slate-300">Refresh Feed</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs font-mono border-b border-slate-800">
+                        <tr>
+                            <th class="px-6 py-3">ID / Time</th>
+                            <th class="px-6 py-3">Symbol & Action</th>
+                            <th class="px-6 py-3">3-Line AI Rationale</th>
+                            <th class="px-6 py-3">Risk Metrics</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Human Approval</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 font-mono">
+                        {% for trade in trades %}
+                        <tr class="hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 text-xs text-slate-400">
+                                <span class="font-bold text-slate-200">#{{ trade.id }}</span><br>
+                                {{ trade.created_at.strftime("%H:%M:%S") if trade.created_at else "" }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-white text-base">{{ trade.symbol }}</span><br>
+                                <span class="px-2 py-0.5 rounded text-xs font-bold {% if trade.action == 'BUY' %}bg-emerald-950 text-emerald-400 border border-emerald-800{% else %}bg-rose-950 text-rose-400 border border-rose-800{% endif %}">
+                                    {{ trade.action }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 font-sans text-xs text-slate-300 space-y-1">
+                                <p class="text-slate-200">1️⃣ {{ trade.brief_line_1 }}</p>
+                                <p class="text-slate-400">2️⃣ {{ trade.brief_line_2 }}</p>
+                                <p class="text-slate-400">3️⃣ {{ trade.brief_line_3 }}</p>
+                            </td>
+                            <td class="px-6 py-4 text-xs">
+                                Entry: <span class="text-slate-200">${{ "%.2f"|format(trade.entry_price) }}</span><br>
+                                Risk: <span class="text-rose-400">${{ "%.2f"|format(trade.dollar_risk) }}</span><br>
+                                Target: <span class="text-emerald-400">${{ "%.2f"|format(trade.expected_return) }}</span> (R:R {{ trade.rr_ratio }})
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                    {% if trade.status == 'EXECUTED' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                    {% elif trade.status == 'PENDING' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                                    {% else %}bg-slate-800 text-slate-400 border border-slate-700{% endif %}">
+                                    {{ trade.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if trade.status == 'PENDING' %}
+                                <div class="flex space-x-2">
+                                    <button onclick="handleDecision('{{ trade.id }}', 'APPROVE')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-all">APPROVE</button>
+                                    <button onclick="handleDecision('{{ trade.id }}', 'REJECT')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-all">REJECT</button>
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-slate-500">Processed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No trading signals logged. Market scanner actively polling...</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
